@@ -12,6 +12,9 @@
 typedef struct Node_s Node;
 struct Node_s {
     // TODO: You should change this
+    void* item;
+    Node* next;
+    Node* prev;
 };
 
 enum ListOutOfBounds {
@@ -20,7 +23,10 @@ enum ListOutOfBounds {
 };
 typedef struct List_s List;
 struct List_s{
-    // TODO: You should change this!
+    // TODO: You should change this!    
+    Node* head;
+    Node* tail;
+    Node* curr;
 };
 
 // Maximum number of unique lists the system can support
@@ -119,5 +125,11 @@ void List_free(List* pList, FREE_FN pItemFreeFn);
 // the first node in the list (if any).
 typedef bool (*COMPARATOR_FN)(void* pItem, void* pComparisonArg);
 void* List_search(List* pList, COMPARATOR_FN pComparator, void* pComparisonArg);
+
+
+//-----------------------------------------
+// private function
+//-----------------------------------------
+static bool isEmpty(List* pList);
 
 #endif
