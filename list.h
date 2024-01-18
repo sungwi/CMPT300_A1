@@ -131,5 +131,8 @@ void* List_search(List* pList, COMPARATOR_FN pComparator, void* pComparisonArg);
 // private function
 //-----------------------------------------
 static bool isEmpty(List* pList);
+static Node* createNode(void* item);
+static void printList(List* pList);
+static void printArr();
 
 #endif
