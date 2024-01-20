@@ -5,7 +5,7 @@
 // Gobal varialbes
 static List list;
 static Node nodeArr[LIST_MAX_NUM_NODES];
-static int count = 0;
+static int count;
 
 // Makes a new, empty list, and returns its reference on success. 
 // Returns a NULL pointer on failure.
@@ -19,6 +19,8 @@ List* List_create(){
         nodeArr[i].next = NULL;
         nodeArr[i].prev = NULL;
     }
+
+    count = 0;
 
     return &list;
 }
@@ -43,7 +45,7 @@ void* List_first(List* pList){
         return NULL;
     }
     pList->head->item = pList->curr->item;
-    return pList->head;
+    return (pList->head->item);
 }
 
 // Returns a pointer to the last item in pList and makes the last item the current item.
@@ -170,6 +172,47 @@ int List_insert_before(List* pList, void* pItem){
     added->next = pList->curr;
     pList->curr = added;
     return 0;
+}
+
+// Return current item and take it out of pList. Make the next item the current one.
+// If the current pointer is before the start of the pList, or beyond the end of the pList,
+// then do not change the pList and return NULL.
+void* List_remove(List* pList){
+    if(pList->curr == NULL){
+        return NULL;
+    }
+    // case 0: one node, curr is head
+    count--;
+    void* r = pList->curr->item;
+    if(pList->curr == pList->head){
+        pList->head->item = NULL;
+        pList->curr->item = NULL;
+        return r;
+    }
+    // case 1: curr is tail
+    if(pList->curr == pList->tail){
+        pList->curr = pList->curr->next; // NULL
+        pList->tail = pList->tail->prev;
+        pList->tail->next = NULL;
+        return r;
+    }
+    // case 2: inside
+    Node* tmpNode = pList->curr->next;
+    pList->curr->prev->next = pList->curr->next;
+    pList->curr->next->prev = pList->curr->prev;
+    tmpNode->item = r;
+    return r;
+}
+
+// Return last item and take it out of pList. Make the new last item the current one.
+// Return NULL if pList is initially empty.
+void* List_trim(List* pList){
+    if(isEmpty(pList)){
+        return NULL;
+    }
+    void* r = pList->tail->item;
+    pList->tail->item = pList->curr->item;
+    return r;
 }
 
 
