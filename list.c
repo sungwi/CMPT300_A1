@@ -4,8 +4,10 @@
 
 // Gobal varialbes
 static List list;
+static Stack stack;
+static int listCount = 0;
 static Node nodeArr[LIST_MAX_NUM_NODES];
-static int count;
+static int nodeCount;
 
 // Makes a new, empty list, and returns its reference on success. 
 // Returns a NULL pointer on failure.
@@ -14,27 +16,12 @@ List* List_create(){
     list.tail = NULL;
     list.curr = NULL;
 
-    for(int i = 0; i < LIST_MAX_NUM_NODES; i++){
-        nodeArr[i].item = NULL;
-        nodeArr[i].next = NULL;
-        nodeArr[i].prev = NULL;
-    }
-
-    count = 0;
-
     return &list;
 }
 
 // Returns the number of items in pList.
 int List_count(List* pList){
-    // int count = 0;
-    // Node* curr = pList->head;
-    // while(curr != pList->tail){
-    //     curr = curr->next;
-    //     count++;
-    // }
-    // return count+1; // add last node
-    return count;
+    return pList->head->count;
 }
 
 // Returns a pointer to the first item in pList and makes the first item the current item.
@@ -63,6 +50,8 @@ void* List_last(List* pList){
 // If this operation advances the current item beyond the end of the pList, a NULL pointer 
 // is returned and the current item is set to be beyond end of pList.
 void* List_next(List* pList){
+    if(isEmpty(pList)) // zero node
+        return NULL;
     pList->curr = pList->curr->next; 
     return pList->curr;
 }
@@ -71,6 +60,8 @@ void* List_next(List* pList){
 // If this operation backs up the current item beyond the start of the pList, a NULL pointer 
 // is returned and the current item is set to be before the start of pList.
 void* List_prev(List* pList){
+    if(isEmpty(pList)) // zero node
+        return NULL;
     pList->curr = pList->curr->prev; 
     return pList->curr;
 }
@@ -83,7 +74,7 @@ void* List_curr(List* pList){
 // Adds item to the end of pList, and makes the new item the current one. 
 // Returns 0 on success, -1 on failure.
 int List_append(List* pList, void* pItem){
-    Node* added = createNode(pItem);
+    Node* added = createNode(pItem, pList);
     if(added == NULL){
         return -1; // failure
     }
@@ -98,7 +89,7 @@ int List_append(List* pList, void* pItem){
 // Adds item to the front of pList, and makes the new item the current one. 
 // Returns 0 on success, -1 on failure.
 int List_prepend(List* pList, void* pItem){
-    Node* added = createNode(pItem);
+    Node* added = createNode(pItem, pList);
     if(added == NULL){
         return -1; // failure
     }
@@ -115,7 +106,7 @@ int List_prepend(List* pList, void* pItem){
 // the current pointer is beyond the end of the pList, the item is added at the end. 
 // Returns 0 on success, -1 on failure.
 int List_insert_after(List* pList, void* pItem){
-    Node* added = createNode(pItem);
+    Node* added = createNode(pItem, pList);
     if(added == NULL){
         return -1; // failure
     }
@@ -147,7 +138,7 @@ int List_insert_after(List* pList, void* pItem){
 // If the current pointer is beyond the end of the pList, the item is added at the end. 
 // Returns 0 on success, -1 on failure.
 int List_insert_before(List* pList, void* pItem){
-    Node* added = createNode(pItem);
+    Node* added = createNode(pItem, pList);
     if(added == NULL){
         return -1; // failure
     }
@@ -182,7 +173,7 @@ void* List_remove(List* pList){
         return NULL;
     }
     // case 0: one node, curr is head
-    count--;
+    pList->head->count--;
     void* r = pList->curr->item;
     if(pList->curr == pList->head){
         pList->head->item = NULL;
@@ -221,14 +212,13 @@ void* List_trim(List* pList){
 //-----------------------------------------
 bool isEmpty(List* pList){
     return (pList->head == NULL) && (pList->tail == NULL);
-    // return (count == 0);
 }
 
-Node* createNode(void* i){
-    if(count > LIST_MAX_NUM_NODES){
+Node* createNode(void* i, List* pList){
+    if(nodeCount > LIST_MAX_NUM_NODES){
         return NULL;
     }
-    Node* node = &nodeArr[count++];
+    Node* node = &nodeArr[nodeCount++];
     node->item = i;
     node->next = NULL;
     node->prev = NULL;
@@ -247,10 +237,38 @@ void printList(List* pList){
     printf("]\n");
 }
 
-void printArr(){
-    printf("\n{");
-    for(int i = 0; i < count; i++){
-        printf("%p ", nodeArr[i].item);
+// void printArr(){
+//     printf("\n{");
+//     for(int i = 0; i < nodeCount; i++){
+//         printf("%p ", nodeArr[i].item);
+//     }
+//     printf("}\n");
+// }
+
+//--------------------------------
+//Stack functions 
+//--------------------------------
+void stackInit(){
+    stack.top = -1;
+}
+
+int stackEmpty(){
+    return stack.top == -1;
+}
+
+int stackFull(){
+    return stack.top = LIST_MAX_NUM_HEADS-1;
+}
+
+void stackPush(int index){
+    if(!stackFull()){
+        stack.data[++stack.top] = index;
     }
-    printf("}\n");
+}
+
+int stackPop(){
+    if(!stackEmpty()){
+        return stack.data[stack.top--];
+    }
+    return -1;
 }

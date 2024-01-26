@@ -15,6 +15,7 @@ struct Node_s {
     void* item;
     Node* next;
     Node* prev;
+    int count; // should be obtained only in head node
 };
 
 enum ListOutOfBounds {
@@ -36,6 +37,12 @@ struct List_s{
 // Maximum total number of nodes (statically allocated) to be shared across all lists
 // (You may modify this, but reset the value to 100 when handing in your assignment)
 #define LIST_MAX_NUM_NODES 100
+
+typedef struct Stack_s Stack;
+struct Stack_s{
+    int top;
+    int data[LIST_MAX_NUM_HEADS]; // list of heads 
+};
 
 // General Error Handling:
 // Client code is assumed never to call these functions with a NULL List pointer, or 
@@ -134,5 +141,10 @@ static bool isEmpty(List* pList);
 static Node* createNode(void* item);
 static void printList(List* pList);
 static void printArr();
+static void stackInit();
+static int stackEmpty();
+static int stackFull();
+static void stackPush(int index);
+static int stackPop();
 
 #endif
