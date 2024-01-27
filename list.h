@@ -15,7 +15,8 @@ struct Node_s {
     void* item;
     Node* next;
     Node* prev;
-    int count; // should be obtained only in head node
+   // int index; 
+    
 };
 
 enum ListOutOfBounds {
@@ -28,6 +29,8 @@ struct List_s{
     Node* head;
     Node* tail;
     Node* curr;
+    int listsIndex; // index of list-array
+    int count; 
 };
 
 // Maximum number of unique lists the system can support
@@ -40,8 +43,9 @@ struct List_s{
 
 typedef struct Stack_s Stack;
 struct Stack_s{
-    int top;
-    int data[LIST_MAX_NUM_HEADS]; // list of heads 
+    //int top;
+    int indices[LIST_MAX_NUM_HEADS]; // list of index
+    
 };
 
 // General Error Handling:
@@ -138,7 +142,7 @@ void* List_search(List* pList, COMPARATOR_FN pComparator, void* pComparisonArg);
 // private function
 //-----------------------------------------
 static bool isEmpty(List* pList);
-static Node* createNode(void* item);
+static Node* createNode(void* item, List* pList);
 static void printList(List* pList);
 static void printArr();
 static void stackInit();
