@@ -15,8 +15,8 @@ struct Node_s {
     void* item;
     Node* next;
     Node* prev;
-   // int index; 
-    
+    bool beforeHead;   // basically for curr node
+    bool beyondTail;   // basically for curr node
 };
 
 enum ListOutOfBounds {
@@ -45,7 +45,6 @@ typedef struct Stack_s Stack;
 struct Stack_s{
     //int top;
     int indices[LIST_MAX_NUM_HEADS]; // list of index
-    
 };
 
 // General Error Handling:
@@ -143,6 +142,7 @@ void* List_search(List* pList, COMPARATOR_FN pComparator, void* pComparisonArg);
 //-----------------------------------------
 static bool isEmpty(List* pList);
 static Node* createNode(void* item, List* pList);
+static void ListStatus(List* pList);
 static void printList(List* pList);
 static void printArr();
 static void stackInit();

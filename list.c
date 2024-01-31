@@ -6,15 +6,14 @@
 //static List list;
 List lists[LIST_MAX_NUM_HEADS]; // list of heads 
 static int listCount = 0;
-static nodeArr[LIST_MAX_NUM_NODES];
+static Node nodeArr[LIST_MAX_NUM_NODES];
 static int nodeCount;
 
 static Stack stack;
 static bool isStackInitialized = false; // should be done at first
 static int stackTop = -1;
+//static int stack_count = 0;
 
-// Makes a new, empty list, and returns its reference on success. 
-// Returns a NULL pointer on failure.
 List* List_create(){
     if(!isStackInitialized){
         stackInit();
@@ -22,6 +21,7 @@ List* List_create(){
     }
     
     int index = stackPop(); // index of heads-array
+    printf("\n## %d ##\n", index);
     if(index == -1){
         return NULL; // not available any more
     }
@@ -29,40 +29,34 @@ List* List_create(){
     lists[index].tail = NULL;
     lists[index].curr = NULL;
     lists[index].listsIndex = index;
+    lists[index].count = 0;
     
     return &lists[index];
 }
 
-// Returns the number of items in pList.
 int List_count(List* pList){
     return pList->count;
 }
 
-// Returns a pointer to the first item in pList and makes the first item the current item.
-// Returns NULL and sets current item to NULL if list is empty.
 void* List_first(List* pList){
     if(isEmpty(pList)){
-        pList->curr->item = NULL;
+        //pList->curr->item = NULL;
         return NULL;
     }
+    void* tmp = pList->head->item;
     pList->head->item = pList->curr->item;
-    return (pList->head->item);
+    return tmp;
 }
 
-// Returns a pointer to the last item in pList and makes the last item the current item.
-// Returns NULL and sets current item to NULL if list is empty.
 void* List_last(List* pList){
     if(isEmpty(pList)){
-        pList->curr->item = NULL;
+        //pList->curr->item = NULL;
         return NULL;
     }
     pList->tail->item = pList->curr->item;
     return pList->tail;
 }
 
-// Advances pList's current item by one, and returns a pointer to the new current item.
-// If this operation advances the current item beyond the end of the pList, a NULL pointer 
-// is returned and the current item is set to be beyond end of pList.
 void* List_next(List* pList){
     if(isEmpty(pList)) // zero node
         return NULL;
@@ -70,9 +64,6 @@ void* List_next(List* pList){
     return pList->curr;
 }
 
-// Backs up pList's current item by one, and returns a pointer to the new current item. 
-// If this operation backs up the current item beyond the start of the pList, a NULL pointer 
-// is returned and the current item is set to be before the start of pList.
 void* List_prev(List* pList){
     if(isEmpty(pList)) // zero node
         return NULL;
@@ -80,13 +71,10 @@ void* List_prev(List* pList){
     return pList->curr;
 }
 
-// Returns a pointer to the current item in pList.
 void* List_curr(List* pList){
     return pList->curr;
 }
 
-// Adds item to the end of pList, and makes the new item the current one. 
-// Returns 0 on success, -1 on failure.
 int List_append(List* pList, void* pItem){
     Node* added = createNode(pItem, pList);
     if(added == NULL){
@@ -100,8 +88,6 @@ int List_append(List* pList, void* pItem){
     return 0;
 }
 
-// Adds item to the front of pList, and makes the new item the current one. 
-// Returns 0 on success, -1 on failure.
 int List_prepend(List* pList, void* pItem){
     Node* added = createNode(pItem, pList);
     if(added == NULL){
@@ -115,42 +101,42 @@ int List_prepend(List* pList, void* pItem){
     return 0;
 }
 
-// Adds the new item to pList directly after the current item, and makes item the current item. 
-// If the current pointer is before the start of the pList, the item is added at the start. If 
-// the current pointer is beyond the end of the pList, the item is added at the end. 
-// Returns 0 on success, -1 on failure.
 int List_insert_after(List* pList, void* pItem){
     Node* added = createNode(pItem, pList);
     if(added == NULL){
-        return -1; // failure
+        return LIST_FAIL; // failure
     }
     // success
     // case 0: Is 1st item
     if(pList->head == NULL){
+        printf("(case 0)");
         pList->head = pList->tail = pList->curr = added;
-        return 0;
+        return LIST_SUCCESS;
     }
-    // case 1: curr @start
-    if(pList->curr == pList->head){
-        return List_append(pList, pItem);
-    }
-    // case 2: curr @beyond the end
-    if(pList->curr == NULL){
+    // case 1: curr befor head
+    if(pList->curr == NULL && (pList->curr->beforeHead) && !(pList->curr->beyondTail)){
+        printf("(case 1)");
         return List_prepend(pList, pItem);
     }
+    // case 2: curr beyond the end
+    if(pList->curr == NULL && !(pList->curr->beforeHead) && (pList->curr->beyondTail)){
+        printf("(case 2)");
+        return List_append(pList, pItem);
+    }
     // case 3: curr @inside of pList
+    printf("(case 3)");
     Node* tmp = pList->curr->next;
     pList->curr->next = added;
     added->prev = pList->curr;
     added->next = tmp;
-    pList->curr = added;
-    return 0;
+    if(tmp != NULL)
+        tmp->prev = added;
+    if(pList->curr == pList->tail)
+        pList->tail = added;
+    pList->curr = added; // curr is new node 
+    return LIST_SUCCESS;
 }
 
-// Adds item to pList directly before the current item, and makes the new item the current one. 
-// If the current pointer is before the start of the pList, the item is added at the start. 
-// If the current pointer is beyond the end of the pList, the item is added at the end. 
-// Returns 0 on success, -1 on failure.
 int List_insert_before(List* pList, void* pItem){
     Node* added = createNode(pItem, pList);
     if(added == NULL){
@@ -162,26 +148,27 @@ int List_insert_before(List* pList, void* pItem){
         pList->head = pList->tail = pList->curr = added;
         return 0;
     }
-    // case 1: curr @start
-    if(pList->curr == pList->head){
-        return List_append(pList, pItem);
-    }
-    // case 2: curr @beyond the end
-    if(pList->curr == NULL){
+    // case 1: curr before the head
+    if(pList->curr == NULL && (pList->curr->beforeHead) && !(pList->curr->beyondTail)){
         return List_prepend(pList, pItem);
+    }
+    // case 2: curr beyond the end
+    if(pList->curr == NULL && !(pList->curr->beforeHead) && (pList->curr->beyondTail)){
+        return List_append(pList, pItem);
     }
     // case 3: curr @inside of pList
     Node* tmp = pList->curr->prev;
     pList->curr->prev = added;
     added->prev = tmp;
+    if(tmp != NULL) 
+        tmp->next = added;
     added->next = pList->curr;
+    if(pList->curr == pList->head)
+        pList->head = added;
     pList->curr = added;
     return 0;
 }
 
-// Return current item and take it out of pList. Make the next item the current one.
-// If the current pointer is before the start of the pList, or beyond the end of the pList,
-// then do not change the pList and return NULL.
 void* List_remove(List* pList){
     if(pList->curr == NULL){
         return NULL;
@@ -209,8 +196,6 @@ void* List_remove(List* pList){
     return r;
 }
 
-// Return last item and take it out of pList. Make the new last item the current one.
-// Return NULL if pList is initially empty.
 void* List_trim(List* pList){
     if(isEmpty(pList)){
         return NULL;
@@ -220,9 +205,6 @@ void* List_trim(List* pList){
     return r;
 }
 
-// Adds pList2 to the end of pList1. The current pointer is set to the current pointer of pList1. 
-// pList2 no longer exists after the operation; its head is available
-// for future operations.
 void List_concat(List* pList1, List* pList2){
     if(isEmpty(pList1) || isEmpty(pList2)) return;
     pList1->tail->next = pList2->head;
@@ -236,7 +218,6 @@ void List_concat(List* pList1, List* pList2){
     pList2->tail = NULL;
     stackPush(pList2->listsIndex);
 }
-
 
 void List_free(List* pList, FREE_FN pItemFreeFn){
     if(pList == NULL) return;
@@ -275,7 +256,7 @@ void* List_search(List* pList, COMPARATOR_FN pComparator, void* pComparisonArg){
 // private function
 //-----------------------------------------
 bool isEmpty(List* pList){
-    return (pList->head == NULL) && (pList->tail == NULL);
+    return (pList->head == NULL);
 }
 
 Node* createNode(void* i, List* pList){
@@ -286,9 +267,34 @@ Node* createNode(void* i, List* pList){
     node->item = i;
     node->next = NULL;
     node->prev = NULL;
-    //node->index = pList->count;
+
+    node->beforeHead = false;
+    node->beyondTail = false;  // initial state
+    
     pList->count++;
     return node;
+}
+
+void ListStatus(List* pList){
+    printf("\n=================\n");
+    if (pList->head) {
+        printf("head: %d\n", *(int*)(pList->head->item)); // Dereferencing the pointer
+    } else {
+        printf("head: NULL\n");
+    }
+    if (pList->curr) {
+        printf("curr: %d\n", *(int*)(pList->curr->item));
+    } else {
+        printf("curr: NULL\n");
+    }
+    if (pList->tail) {
+        printf("tail: %d\n", *(int*)(pList->tail->item));
+    } else {
+        printf("tail: NULL\n");
+    }
+    printf("count: %d\n", List_count(pList));
+    printf("list-index: %d\n", pList->listsIndex);
+    printf("=================\n");
 }
 
 void printList(List* pList){
@@ -315,10 +321,20 @@ void printList(List* pList){
 //Stack functions 
 //--------------------------------
 void stackInit(){
+    //stack_count = 0;
+    stackTop = -1;
     for(int i = 0; i < LIST_MAX_NUM_HEADS; i++){
-        push(i);
+        stackPush(i);
+        //stack_count++;
     }
-    // stackTop is now 9 (10th)
+
+    //------------------------
+    printf("\n {");
+    for(int i = 0; i < LIST_MAX_NUM_HEADS; i++){
+        printf("%d, ", stack.indices[i]);
+    }
+    printf("}\n");
+    //------------------------
 }
 
 int stackEmpty(){
@@ -326,12 +342,14 @@ int stackEmpty(){
 }
 
 int stackFull(){
-    return stackTop = LIST_MAX_NUM_HEADS-1;
+    return stackTop == LIST_MAX_NUM_HEADS-1;
 }
 
 void stackPush(int index){
+     //printf("%d",index);
     if(!stackFull()){
         stack.indices[++stackTop] = index;
+        //stackTop++;
     }
 }
 
@@ -339,6 +357,7 @@ void stackPush(int index){
 int stackPop(){
     if(!stackEmpty()){
         int index = stack.indices[stackTop--];
+        //stack_count--;
         return index;
     }
     return -1;
