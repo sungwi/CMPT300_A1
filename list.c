@@ -1,6 +1,6 @@
 #include "list.h"
-#include <stdlib.h>
-#include <stdio.h>
+// #include <stdlib.h>
+// #include <stdio.h>
 
 // Gobal varialbes
 //static List list;
@@ -14,6 +14,121 @@ static bool isStackInitialized = false; // should be done at first
 static int stackTop = -1;
 //static int stack_count = 0;
 
+
+//-----------------------------------------
+// private function
+//-----------------------------------------
+static bool isEmpty(List* pList){
+    return (pList->head == NULL);
+}
+
+static Node* createNode(void* i, List* pList){
+    if(nodeCount > LIST_MAX_NUM_NODES){
+        return NULL;
+    }
+    Node* node = &nodeArr[nodeCount++];
+    node->item = i;
+    node->next = NULL;
+    node->prev = NULL;
+
+    node->beforeHead = false;
+    node->beyondTail = false;  // initial state
+    
+    pList->count++;
+    return node;
+}
+
+static void ListStatus(List* pList){
+    printf("\n=================\n");
+    if (pList->head) {
+        printf("head: %d\n", *(int*)(pList->head->item)); // Dereferencing the pointer
+    } else {
+        printf("head: NULL\n");
+    }
+    if (pList->curr) {
+        printf("curr: %d\n", *(int*)(pList->curr->item));
+    } else {
+        printf("curr: NULL\n");
+    }
+    if (pList->tail) {
+        printf("tail: %d\n", *(int*)(pList->tail->item));
+    } else {
+        printf("tail: NULL\n");
+    }
+    printf("count: %d\n", List_count(pList));
+    printf("list-index: %d\n", pList->listsIndex);
+    printf("=================\n");
+}
+
+static void printList(List* pList){
+    Node* n = pList->head;
+    printf("\n[");
+    while(n != NULL){
+        int* intPtr = (int*)(n->item);
+        printf("%d ", *intPtr);
+        //printf("%p ", n->item);
+        n = n->next;
+    }
+    printf("]\n");
+}
+
+// static void printArr(){
+//     printf("\n{");
+//     for(int i = 0; i < nodeCount; i++){
+//         printf("%p ", nodeArr[i].item);
+//     }
+//     printf("}\n");
+// }
+
+//--------------------------------
+//Stack functions 
+//--------------------------------
+static int stackEmpty(){
+    return stackTop == -1;
+}
+
+static int stackFull(){
+    return stackTop == LIST_MAX_NUM_HEADS-1;
+}
+
+static void stackPush(int index){
+     //printf("%d",index);
+    if(!stackFull()){
+        stack.indices[++stackTop] = index;
+        //stackTop++;
+    }
+}
+
+// returns free index of heads-array
+static int stackPop(){
+    if(!stackEmpty()){
+        int index = stack.indices[stackTop--];
+        //stack_count--;
+        return index;
+    }
+    return -1;
+}
+
+static void stackInit(){
+    //stack_count = 0;
+    stackTop = -1;
+    for(int i = 0; i < LIST_MAX_NUM_HEADS; i++){
+        stackPush(i);
+        //stack_count++;
+    }
+
+    //------------------------
+    printf("\n {");
+    for(int i = 0; i < LIST_MAX_NUM_HEADS; i++){
+        printf("%d, ", stack.indices[i]);
+    }
+    printf("}\n");
+    //------------------------
+}
+
+
+
+//-----------------------------------------
 List* List_create(){
     if(!isStackInitialized){
         stackInit();
@@ -58,21 +173,21 @@ void* List_last(List* pList){
 }
 
 void* List_next(List* pList){
-    if(isEmpty(pList)) // zero node
+    if(isEmpty(pList) || pList->curr == NULL) // zero node
         return NULL;
     pList->curr = pList->curr->next; 
     return pList->curr;
 }
 
 void* List_prev(List* pList){
-    if(isEmpty(pList)) // zero node
+    if(isEmpty(pList) || pList->curr == NULL) // zero node
         return NULL;
     pList->curr = pList->curr->prev; 
     return pList->curr;
 }
 
 void* List_curr(List* pList){
-    return pList->curr;
+    return pList->curr->item;
 }
 
 int List_append(List* pList, void* pItem){
@@ -170,12 +285,12 @@ int List_insert_before(List* pList, void* pItem){
 }
 
 void* List_remove(List* pList){
-    if(pList->curr == NULL){
+    if(isEmpty(pList) || (pList->curr == NULL && (pList->curr->beforeHead || pList->curr->beyondTail))){
         return NULL;
     }
-    // case 0: one node, curr is head
     pList->count--;
     void* r = pList->curr->item;
+    // case 0: one node, curr is head
     if(pList->curr == pList->head){
         pList->head->item = NULL;
         pList->curr->item = NULL;
@@ -183,15 +298,16 @@ void* List_remove(List* pList){
     }
     // case 1: curr is tail
     if(pList->curr == pList->tail){
-        pList->curr = pList->curr->next; // NULL
+        pList->curr = pList->curr->next; // set curr to NULL
         pList->tail = pList->tail->prev;
         pList->tail->next = NULL;
         return r;
     }
     // case 2: inside
-    Node* tmpNode = pList->curr->next;
+    Node* tmpNode = pList->curr;
     pList->curr->prev->next = pList->curr->next;
     pList->curr->next->prev = pList->curr->prev;
+    pList->curr = pList->curr->next;
     tmpNode->item = r;
     return r;
 }
@@ -251,114 +367,3 @@ void* List_search(List* pList, COMPARATOR_FN pComparator, void* pComparisonArg){
     return NULL;
 }
 
-
-//-----------------------------------------
-// private function
-//-----------------------------------------
-bool isEmpty(List* pList){
-    return (pList->head == NULL);
-}
-
-Node* createNode(void* i, List* pList){
-    if(nodeCount > LIST_MAX_NUM_NODES){
-        return NULL;
-    }
-    Node* node = &nodeArr[nodeCount++];
-    node->item = i;
-    node->next = NULL;
-    node->prev = NULL;
-
-    node->beforeHead = false;
-    node->beyondTail = false;  // initial state
-    
-    pList->count++;
-    return node;
-}
-
-void ListStatus(List* pList){
-    printf("\n=================\n");
-    if (pList->head) {
-        printf("head: %d\n", *(int*)(pList->head->item)); // Dereferencing the pointer
-    } else {
-        printf("head: NULL\n");
-    }
-    if (pList->curr) {
-        printf("curr: %d\n", *(int*)(pList->curr->item));
-    } else {
-        printf("curr: NULL\n");
-    }
-    if (pList->tail) {
-        printf("tail: %d\n", *(int*)(pList->tail->item));
-    } else {
-        printf("tail: NULL\n");
-    }
-    printf("count: %d\n", List_count(pList));
-    printf("list-index: %d\n", pList->listsIndex);
-    printf("=================\n");
-}
-
-void printList(List* pList){
-    Node* n = pList->head;
-    printf("\n[");
-    while(n != NULL){
-        int* intPtr = (int*)(n->item);
-        printf("%d ", *intPtr);
-        //printf("%p ", n->item);
-        n = n->next;
-    }
-    printf("]\n");
-}
-
-// void printArr(){
-//     printf("\n{");
-//     for(int i = 0; i < nodeCount; i++){
-//         printf("%p ", nodeArr[i].item);
-//     }
-//     printf("}\n");
-// }
-
-//--------------------------------
-//Stack functions 
-//--------------------------------
-void stackInit(){
-    //stack_count = 0;
-    stackTop = -1;
-    for(int i = 0; i < LIST_MAX_NUM_HEADS; i++){
-        stackPush(i);
-        //stack_count++;
-    }
-
-    //------------------------
-    printf("\n {");
-    for(int i = 0; i < LIST_MAX_NUM_HEADS; i++){
-        printf("%d, ", stack.indices[i]);
-    }
-    printf("}\n");
-    //------------------------
-}
-
-int stackEmpty(){
-    return stackTop == -1;
-}
-
-int stackFull(){
-    return stackTop == LIST_MAX_NUM_HEADS-1;
-}
-
-void stackPush(int index){
-     //printf("%d",index);
-    if(!stackFull()){
-        stack.indices[++stackTop] = index;
-        //stackTop++;
-    }
-}
-
-// returns free index of heads-array
-int stackPop(){
-    if(!stackEmpty()){
-        int index = stack.indices[stackTop--];
-        //stack_count--;
-        return index;
-    }
-    return -1;
-}

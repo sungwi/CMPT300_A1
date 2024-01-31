@@ -5,6 +5,8 @@
 #ifndef _LIST_H_
 #define _LIST_H_
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define LIST_SUCCESS 0
 #define LIST_FAIL -1
@@ -140,15 +142,15 @@ void* List_search(List* pList, COMPARATOR_FN pComparator, void* pComparisonArg);
 //-----------------------------------------
 // private function
 //-----------------------------------------
-static bool isEmpty(List* pList);
-static Node* createNode(void* item, List* pList);
-static void ListStatus(List* pList);
-static void printList(List* pList);
-static void printArr();
-static void stackInit();
-static int stackEmpty();
-static int stackFull();
-static void stackPush(int index);
-static int stackPop();
+// static bool isEmpty(List* pList);
+// static Node* createNode(void* item, List* pList);
+// static void ListStatus(List* pList);
+// static void printList(List* pList);
+// static void printArr();
+// static void stackInit();
+// static int stackEmpty();
+// static int stackFull();
+// static void stackPush(int index);
+// static int stackPop();
 
 #endif

@@ -75,5 +75,51 @@ int main(){
     printList(list1);
     ListStatus(list_empty);
 
+    //-------------------------------------------------
+    // List_remove
+        printf("\n[ LIST_REMOVE ]---------------------------------------------------\n");
+    //-------------------------------------------------
+    for(int i = 0; i < 5; i++){
+        int* rm = (int*)List_remove(list1);
+        printf("removed: %d", *rm);
+        printList(list1);
+        ListStatus(list1);
+    }
+
+
+    //-------------------------------------------------
+    // List_next
+        printf("\n[ LIST_NEXT ]---------------------------------------------------\n");
+    //-------------------------------------------------
+    
+    for(int i = 0; (i < 5); i++){
+        void* n = List_next(list1);
+        ListStatus(list1);
+    }
+    // void* n = List_next(list1);
+    // ListStatus(list1);
+    // printList(list1);
+
+    //-------------------------------------------------
+    // List_prev
+        printf("\n[ LIST_PREV ]---------------------------------------------------\n");
+    //-------------------------------------------------
+    
+    for(int i = 0; i < 3; i++){
+        void* p = List_prev(list1);
+        ListStatus(list1);
+        printList(list1);
+    }
+
+    //-------------------------------------------------
+    // List_curr
+        printf("\n[ LIST_CURR ]---------------------------------------------------\n");
+    //-------------------------------------------------
+    int* c = (int*)List_curr(list1);
+    printf("curr item: %d", *c);
+    ListStatus(list1);
+
+
+
     return 0;
 }
