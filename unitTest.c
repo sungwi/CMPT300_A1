@@ -1,5 +1,11 @@
+/*
+    Course: CMPT 300 - Assignment 1
+    Name: Sungwi Kim
+    Student Number: 301592065
+*/
+
+
 #include "list.h"
-//#include "list.c"
 
 static void ListStatus(List* pList){
     printf("=================\n");
@@ -37,7 +43,6 @@ static void printList(List* pList){
 
 int main(){
     List* list1 = List_create();
-    //printList(pList);
 
     //-------------------------------------------------
     // List_insert_after: List_append, List_prepend
@@ -85,7 +90,7 @@ int main(){
         printf("///////////////////////////////\n\n");
     //-------------------------------------------------
     int* f1 = (int*)List_first(list1);
-    printf("\nList_first: %d", *f1);
+    printf("\nList_first: %d\n", *f1);
     ListStatus(list1);
     printList(list1);
 
@@ -97,7 +102,6 @@ int main(){
     else
         printf("\nFail list_first of empty case");
     printList(list_empty);
-    printList(list1);
     ListStatus(list_empty);
 
     //-------------------------------------------------
@@ -107,7 +111,7 @@ int main(){
         printf("///////////////////////////////\n\n");
     //-------------------------------------------------
     int* l1 = (int*)List_last(list1);
-    printf("\nList_last: %d", *l1);
+    printf("\nList_last: %d\n", *l1);
     ListStatus(list1);
     printList(list1);
 
@@ -142,7 +146,8 @@ int main(){
     //-------------------------------------------------
     
     for(int i = 0; (i < 5); i++){
-        void* n = List_next(list1);
+        int* n = (int*)List_next(list1);
+        printf("new next/curr: %d\n", *n);
         ListStatus(list1);
     }
     // void* n = List_next(list1);
@@ -157,9 +162,10 @@ int main(){
         printf("///////////////////////////////\n\n");
     //-------------------------------------------------
     for(int i = 0; i < 3; i++){
-        void* p = List_prev(list1);
+        int* p = (int*)List_prev(list1);
+        printf("new prev/curr: %d\n", *p);
         ListStatus(list1);
-        printList(list1);
+        //printList(list1);
     }
 
     //-------------------------------------------------
@@ -170,7 +176,7 @@ int main(){
     //-------------------------------------------------
 
     int* c = (int*)List_curr(list1);
-    printf("curr item: %d", *c);
+    printf("curr item: %d\n", *c);
     ListStatus(list1);
     printList(list1);
 
@@ -186,7 +192,7 @@ int main(){
     printList(list1);
     int* tr = (int*)List_trim(list1);
     printList(list1);
-    printf("trimed item: %d", *tr);
+    printf("trimed item: %d\n", *tr);
     ListStatus(list1);
 
 
@@ -199,7 +205,7 @@ int main(){
     printList(list2);
     int* tr2 = (int*)List_trim(list2);
     printList(list2);
-    printf("trimed item: %d", *tr);
+    printf("trimed item: %d\n", *tr);
     ListStatus(list2);
 
     // trim test #3: empty list
@@ -245,14 +251,6 @@ int main(){
     printList(list_empty);
     List_concat(list4, list_empty);
     printList(list4);
-    
-
-    //-------------------------------------------------
-    // List_free
-        printf("\n///////////////////////////////\n");
-        printf("/////////[ LIST_FREE ]/////////\n");
-        printf("///////////////////////////////\n");
-    //-------------------------------------------------
     
 
 

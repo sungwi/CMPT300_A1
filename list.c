@@ -1,101 +1,113 @@
+/*
+    Course: CMPT 300 - Assignment 1
+    Name: Sungwi Kim
+    Student Number: 301592065
+*/
+
+
 #include "list.h"
-// #include <stdlib.h>
-// #include <stdio.h>
 
 // Gobal varialbes
-//static List list;
-List lists[LIST_MAX_NUM_HEADS]; // list of heads 
-static int listCount = 0;
+static List lists[LIST_MAX_NUM_HEADS]; // list of heads 
+
 static Node nodeArr[LIST_MAX_NUM_NODES];
 static int nodeCount;
+static Stack nodeStack; // keep track of index in pool
+static bool isNodeStackInitialized = false;
 
 static Stack stack;
 static bool isStackInitialized = false; // should be done at first
-static int stackTop = -1;
-//static int stack_count = 0;
 
 
 //-----------------------------------------
 // private function
 //-----------------------------------------
-static bool isEmpty(List* pList){
-    return (pList->head == NULL);
+static int stackEmpty(Stack* stack){
+    return stack->top == -1;
 }
 
-static Node* createNode(void* i, List* pList){
-    if(nodeCount > LIST_MAX_NUM_NODES){
-        return NULL;
-    }
-    Node* node = &nodeArr[nodeCount++];
-    node->item = i;
-    node->next = NULL;
-    node->prev = NULL;
-
-    // node->beforeHead = false;
-    // node->beyondTail = false;  // initial state
-    
-    pList->count++;
-    return node;
+static int stackFull(Stack* stack){
+    return stack->top == stack->capacity - 1;
 }
 
-
-//--------------------------------
-//Stack functions 
-//--------------------------------
-static int stackEmpty(){
-    return stackTop == -1;
-}
-
-static int stackFull(){
-    return stackTop == LIST_MAX_NUM_HEADS-1;
-}
-
-static void stackPush(int index){
+static void stackPush(Stack* stack, int index){
      //printf("%d",index);
-    if(!stackFull()){
-        stack.indices[++stackTop] = index;
+    if(!stackFull(stack)){
+        stack->indices[++stack->top] = index;
         //stackTop++;
     }
 }
 
 // returns free index of heads-array
-static int stackPop(){
-    if(!stackEmpty()){
-        int index = stack.indices[stackTop--];
+static int stackPop(Stack* stack){
+    if(!stackEmpty(stack)){
+        int index = stack->indices[(stack->top)--];
         //stack_count--;
         return index;
     }
     return -1;
 }
 
-static void stackInit(){
+static void stackInit(Stack* stack, int capacity){
     //stack_count = 0;
-    stackTop = -1;
-    for(int i = 0; i < LIST_MAX_NUM_HEADS; i++){
-        stackPush(i);
-        //stack_count++;
+    //stackTop = -1;
+    stack->capacity = capacity;
+    stack->top = -1;
+    for(int i = 0; i < stack->capacity; i++){ //10 or 100
+        stackPush(stack, i);
     }
 
     //------------------------
     printf("\n {");
-    for(int i = 0; i < LIST_MAX_NUM_HEADS; i++){
-        printf("%d, ", stack.indices[i]);
+    for(int i = 0; i < stack->capacity; i++){
+        printf("%d, ", stack->indices[i]);
     }
     printf("}\n");
     //------------------------
 }
 
+static bool isEmpty(List* pList){
+    return (pList->head == NULL);
+}
+
+static Node* createNode(void* i, List* pList){
+    if(nodeCount >= LIST_MAX_NUM_NODES){
+        return NULL;
+    }
+    nodeCount++;
+    int nodeIndex = stackPop(&nodeStack);
+    Node* node = &nodeArr[nodeIndex];
+    node->item = i;
+    node->next = NULL;
+    node->prev = NULL;
+    node->poolIndex = nodeIndex;
+    
+    pList->count++;
+    return node;
+}
+
 
 
 //-----------------------------------------
+// public function
+//-----------------------------------------
 List* List_create(){
-    //printf("START list create\n");
     if(!isStackInitialized){
-        stackInit();
+        stackInit(&stack, LIST_MAX_NUM_HEADS);
         isStackInitialized = true; 
     }
+    if(!isNodeStackInitialized){
+        stackInit(&nodeStack, LIST_MAX_NUM_NODES);
+        isNodeStackInitialized = true;
+        for(int i = 0; i < LIST_MAX_NUM_NODES; i++){
+            nodeArr[i].item = NULL;
+            nodeArr[i].next = NULL;
+            nodeArr[i].prev = NULL;
+            nodeArr[i].poolIndex = -1;
+        }
+    }
     
-    int index = stackPop(); // index of heads-array
+    int index = stackPop(&stack); // index of heads-array
     //printf("\n## %d ##\n", index);
     if(index == -1){
         return NULL; // not available any more
@@ -128,22 +140,31 @@ void* List_last(List* pList){
         //pList->curr->item = NULL;
         return NULL;
     }
+    void* tmp = pList->tail->item;
     pList->tail->item = pList->curr->item;
-    return pList->tail;
+    return tmp;
 }
 
 void* List_next(List* pList){
     if(isEmpty(pList) || pList->curr == NULL) // zero node
         return NULL;
     pList->curr = pList->curr->next; 
-    return pList->curr;
+    if(pList->curr == NULL){
+        pList->state = LIST_OOB_END;
+        return NULL;
+    }
+    return pList->curr->item;
 }
 
 void* List_prev(List* pList){
     if(isEmpty(pList) || pList->curr == NULL) // zero node
         return NULL;
     pList->curr = pList->curr->prev; 
-    return pList->curr;
+    if(pList->curr == NULL){
+        pList->state = LIST_OOB_START;
+        return NULL;
+    }
+    return pList->curr->item;
 }
 
 void* List_curr(List* pList){
@@ -252,35 +273,37 @@ void* List_remove(List* pList){
     }
     pList->count--;
     void* r = pList->curr->item;
+    int poolIndex = pList->curr->poolIndex;
     // case 0: one node, curr is head
     if(pList->curr == pList->head){
         pList->head->item = NULL;
         pList->curr->item = NULL;
-        return r;
     }
     // case 1: curr is tail
-    if(pList->curr == pList->tail){
+    else if(pList->curr == pList->tail){
         pList->curr = pList->curr->next; // set curr to NULL
         pList->tail = pList->tail->prev;
         pList->tail->next = NULL;
-        return r;
     }
     // case 2: inside
-    Node* tmpNode = pList->curr;
-    pList->curr->prev->next = pList->curr->next;
-    pList->curr->next->prev = pList->curr->prev;
-    pList->curr = pList->curr->next;
-    tmpNode->item = r;
+    else{
+        Node* tmpNode = pList->curr;
+        pList->curr->prev->next = pList->curr->next;
+        pList->curr->next->prev = pList->curr->prev;
+        pList->curr = pList->curr->next;
+        tmpNode->item = r; 
+    }
+    stackPush(&nodeStack, poolIndex);
+    nodeCount--;
     return r;
 }
 
 void* List_trim(List* pList){
-    //printf("List-TRIM is called");
     if(isEmpty(pList)){
-        //printf("List-TRIM is END");
         return NULL;
     }
     void* r = pList->tail->item;
+    int poolIndex = pList->tail->poolIndex;
     // case 1: if one node list
     if(pList->count == 1){
         pList->state = LIST_OOB_END;
@@ -294,7 +317,8 @@ void* List_trim(List* pList){
         pList->curr = pList->tail; 
     }
     pList->count--;
-    //printf("List-TRIM is END");
+    stackPush(&nodeStack, poolIndex);
+    nodeCount--;
     return r;
 }
 
@@ -311,7 +335,7 @@ void List_concat(List* pList1, List* pList2){
     pList2->tail = NULL;
     pList2->count = 0;
     pList2->listsIndex = -1;
-    stackPush(pList2->listsIndex);
+    stackPush(&stack, pList2->listsIndex);
 }
 
 void List_free(List* pList, FREE_FN pItemFreeFn){
@@ -330,7 +354,7 @@ void List_free(List* pList, FREE_FN pItemFreeFn){
     pList->curr = NULL;
     pList->tail = NULL;
     pList->count = 0;
-    stackPush(pList->listsIndex); 
+    stackPush(&stack, pList->listsIndex); 
 }
 
 

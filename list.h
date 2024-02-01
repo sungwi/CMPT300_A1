@@ -1,3 +1,10 @@
+/*
+    Course: CMPT 300 - Assignment 1
+    Name: Sungwi Kim
+    Student Number: 301592065
+*/
+
+
 // List data type
 // You may modify this file as needed; however,
 // you may *NOT* modify the function prototypes or constant names.
@@ -23,9 +30,7 @@ struct Node_s {
     Node* next;
     Node* prev;
 
-    // bool beforeHead;   // basically for curr node
-    // bool beyondTail;   // basically for curr node
-    //enum ListOutOfBounds state; 
+    int poolIndex;
 };
 
 
@@ -50,9 +55,11 @@ struct List_s{
 
 typedef struct Stack_s Stack;
 struct Stack_s{
-    //int top;
-    int indices[LIST_MAX_NUM_HEADS]; // list of index
+    int indices[LIST_MAX_NUM_NODES]; // list of index
+    int top;
+    int capacity;
 };
+
 
 // General Error Handling:
 // Client code is assumed never to call these functions with a NULL List pointer, or 
@@ -124,7 +131,7 @@ void List_concat(List* pList1, List* pList2);
 // Delete pList. pItemFreeFn is a pointer to a routine that frees an item. 
 // It should be invoked (within List_free) as: (*pItemFreeFn)(itemToBeFreedFromNode);
 // pList and all its nodes no longer exists after the operation; its head and nodes are 
-// available for future operations.
+// available for future operationsaa.
 typedef void (*FREE_FN)(void* pItem);
 void List_free(List* pList, FREE_FN pItemFreeFn);
 
