@@ -1,27 +1,35 @@
+# Makefile
+
 # Compiler to use
-CC=gcc
+CC = gcc
 
-# Compiler flags, e.g. -g for debug, -Wall for all warnings
-CFLAGS=-Wall
+# Compiler flags
+CFLAGS = -Wall -g
 
-# Name of the unit test executable
-UNITTEST=unitTest
+# Name of the executable
+EXEC = unitTest
 
-# Build the unit tests
-all: $(UNITTEST)
+# Object files
+OBJS = unitTest.o list.o
 
-# Link the unit test executable
-$(UNITTEST): list.o unitTest.o
-	$(CC) $(CFLAGS) -o $(UNITTEST) list.o unitTest.o
+# Default target
+all: $(EXEC)
 
-# Compile list source file to object file
-list.o: list.c list.h
-	$(CC) $(CFLAGS) -c list.c
+# Link the executable
+$(EXEC): $(OBJS)
+	$(CC) $(CFLAGS) -o $(EXEC) $(OBJS)
 
-# Compile unittest source file to object file
+# Compile unitTest.c
 unitTest.o: unitTest.c list.h
 	$(CC) $(CFLAGS) -c unitTest.c
 
-# Clean up build artifacts
+# Compile list.c
+list.o: list.c list.h
+	$(CC) $(CFLAGS) -c list.c
+
+# Clean up
 clean:
-	rm -f *.o $(UNITTEST)
+	rm -f $(OBJS) $(EXEC)
+
+# Phony targets
+.PHONY: all clean

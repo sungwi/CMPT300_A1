@@ -11,20 +11,24 @@
 #define LIST_SUCCESS 0
 #define LIST_FAIL -1
 
+enum ListOutOfBounds {
+    LIST_OOB_START,
+    LIST_OOB_END
+};
+
 typedef struct Node_s Node;
 struct Node_s {
     // TODO: You should change this
     void* item;
     Node* next;
     Node* prev;
-    bool beforeHead;   // basically for curr node
-    bool beyondTail;   // basically for curr node
+
+    // bool beforeHead;   // basically for curr node
+    // bool beyondTail;   // basically for curr node
+    //enum ListOutOfBounds state; 
 };
 
-enum ListOutOfBounds {
-    LIST_OOB_START,
-    LIST_OOB_END
-};
+
 typedef struct List_s List;
 struct List_s{
     // TODO: You should change this!    
@@ -33,6 +37,7 @@ struct List_s{
     Node* curr;
     int listsIndex; // index of list-array
     int count; 
+    enum ListOutOfBounds state; 
 };
 
 // Maximum number of unique lists the system can support
@@ -139,18 +144,5 @@ typedef bool (*COMPARATOR_FN)(void* pItem, void* pComparisonArg);
 void* List_search(List* pList, COMPARATOR_FN pComparator, void* pComparisonArg);
 
 
-//-----------------------------------------
-// private function
-//-----------------------------------------
-// static bool isEmpty(List* pList);
-// static Node* createNode(void* item, List* pList);
-// static void ListStatus(List* pList);
-// static void printList(List* pList);
-// static void printArr();
-// static void stackInit();
-// static int stackEmpty();
-// static int stackFull();
-// static void stackPush(int index);
-// static int stackPop();
 
 #endif

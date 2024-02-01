@@ -31,54 +31,13 @@ static Node* createNode(void* i, List* pList){
     node->next = NULL;
     node->prev = NULL;
 
-    node->beforeHead = false;
-    node->beyondTail = false;  // initial state
+    // node->beforeHead = false;
+    // node->beyondTail = false;  // initial state
     
     pList->count++;
     return node;
 }
 
-static void ListStatus(List* pList){
-    printf("\n=================\n");
-    if (pList->head) {
-        printf("head: %d\n", *(int*)(pList->head->item)); // Dereferencing the pointer
-    } else {
-        printf("head: NULL\n");
-    }
-    if (pList->curr) {
-        printf("curr: %d\n", *(int*)(pList->curr->item));
-    } else {
-        printf("curr: NULL\n");
-    }
-    if (pList->tail) {
-        printf("tail: %d\n", *(int*)(pList->tail->item));
-    } else {
-        printf("tail: NULL\n");
-    }
-    printf("count: %d\n", List_count(pList));
-    printf("list-index: %d\n", pList->listsIndex);
-    printf("=================\n");
-}
-
-static void printList(List* pList){
-    Node* n = pList->head;
-    printf("\n[");
-    while(n != NULL){
-        int* intPtr = (int*)(n->item);
-        printf("%d ", *intPtr);
-        //printf("%p ", n->item);
-        n = n->next;
-    }
-    printf("]\n");
-}
-
-// static void printArr(){
-//     printf("\n{");
-//     for(int i = 0; i < nodeCount; i++){
-//         printf("%p ", nodeArr[i].item);
-//     }
-//     printf("}\n");
-// }
 
 //--------------------------------
 //Stack functions 
@@ -130,13 +89,14 @@ static void stackInit(){
 
 //-----------------------------------------
 List* List_create(){
+    //printf("START list create\n");
     if(!isStackInitialized){
         stackInit();
         isStackInitialized = true; 
     }
     
     int index = stackPop(); // index of heads-array
-    printf("\n## %d ##\n", index);
+    //printf("\n## %d ##\n", index);
     if(index == -1){
         return NULL; // not available any more
     }
@@ -145,7 +105,7 @@ List* List_create(){
     lists[index].curr = NULL;
     lists[index].listsIndex = index;
     lists[index].count = 0;
-    
+    //printf("END list create\n");
     return &lists[index];
 }
 
@@ -224,22 +184,23 @@ int List_insert_after(List* pList, void* pItem){
     // success
     // case 0: Is 1st item
     if(pList->head == NULL){
-        printf("(case 0)");
+        //printf("(case 0)");
         pList->head = pList->tail = pList->curr = added;
+       // pList->head->next = pList->tail->next = pList->curr->next = NULL;
         return LIST_SUCCESS;
     }
     // case 1: curr befor head
-    if(pList->curr == NULL && (pList->curr->beforeHead) && !(pList->curr->beyondTail)){
-        printf("(case 1)");
+    if(pList->curr == NULL && (pList->state == LIST_OOB_START)){
+        //printf("(case 1)");
         return List_prepend(pList, pItem);
     }
     // case 2: curr beyond the end
-    if(pList->curr == NULL && !(pList->curr->beforeHead) && (pList->curr->beyondTail)){
-        printf("(case 2)");
+    if(pList->curr == NULL && (pList->state == LIST_OOB_END)){
+        //printf("(case 2)");
         return List_append(pList, pItem);
     }
     // case 3: curr @inside of pList
-    printf("(case 3)");
+    //printf("(case 3)");
     Node* tmp = pList->curr->next;
     pList->curr->next = added;
     added->prev = pList->curr;
@@ -264,11 +225,11 @@ int List_insert_before(List* pList, void* pItem){
         return 0;
     }
     // case 1: curr before the head
-    if(pList->curr == NULL && (pList->curr->beforeHead) && !(pList->curr->beyondTail)){
+    if(pList->curr == NULL && (pList->state == LIST_OOB_START)){
         return List_prepend(pList, pItem);
     }
     // case 2: curr beyond the end
-    if(pList->curr == NULL && !(pList->curr->beforeHead) && (pList->curr->beyondTail)){
+    if(pList->curr == NULL && (pList->state == LIST_OOB_END)){
         return List_append(pList, pItem);
     }
     // case 3: curr @inside of pList
@@ -285,7 +246,8 @@ int List_insert_before(List* pList, void* pItem){
 }
 
 void* List_remove(List* pList){
-    if(isEmpty(pList) || (pList->curr == NULL && (pList->curr->beforeHead || pList->curr->beyondTail))){
+    if(isEmpty(pList) || (pList->curr == NULL 
+                        && ((pList->state ==  LIST_OOB_START) || (pList->state == LIST_OOB_END)))){
         return NULL;
     }
     pList->count--;
@@ -313,11 +275,26 @@ void* List_remove(List* pList){
 }
 
 void* List_trim(List* pList){
+    //printf("List-TRIM is called");
     if(isEmpty(pList)){
+        //printf("List-TRIM is END");
         return NULL;
     }
     void* r = pList->tail->item;
-    pList->tail->item = pList->curr->item;
+    // case 1: if one node list
+    if(pList->count == 1){
+        pList->state = LIST_OOB_END;
+        pList->head = pList->curr = pList->tail = NULL;
+    }
+    else{
+        pList->tail = pList->tail->prev; 
+        if (pList->tail) { 
+            pList->tail->next = NULL;
+        }
+        pList->curr = pList->tail; 
+    }
+    pList->count--;
+    //printf("List-TRIM is END");
     return r;
 }
 
@@ -332,6 +309,8 @@ void List_concat(List* pList1, List* pList2){
     pList2->head = NULL;
     pList2->curr = NULL;
     pList2->tail = NULL;
+    pList2->count = 0;
+    pList2->listsIndex = -1;
     stackPush(pList2->listsIndex);
 }
 
@@ -339,18 +318,21 @@ void List_free(List* pList, FREE_FN pItemFreeFn){
     if(pList == NULL) return;
     Node* node = pList->head;
     while(node != NULL){
+        Node* nextNode = node->next; 
         if(pItemFreeFn != NULL && node->item != NULL){
-            (*pItemFreeFn)(node->item);
+            (*pItemFreeFn)(node->item); 
         }
-        node = node->next;
+        free(node); 
+        node = nextNode; 
     }
 
     pList->head = NULL;
     pList->curr = NULL;
     pList->tail = NULL;
     pList->count = 0;
-    stackPush(pList->listsIndex);
+    stackPush(pList->listsIndex); 
 }
+
 
 void* List_search(List* pList, COMPARATOR_FN pComparator, void* pComparisonArg){
     Node* node = pList->curr;
